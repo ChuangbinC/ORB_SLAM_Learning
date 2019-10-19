@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-19 17:55:13
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -70,8 +77,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     bool bVocLoad = false; // chose loading method based on file extension
     if (has_suffix(strVocFile, ".txt"))
 	  bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-	else if(has_suffix(strVocFile, ".bin"))
-	  bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+	// else if(has_suffix(strVocFile, ".bin"))
+	//   bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
 	else
 	  bVocLoad = false;
     if(!bVocLoad)
