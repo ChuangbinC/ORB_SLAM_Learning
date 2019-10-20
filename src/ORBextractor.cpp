@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-20 17:35:02
+ * @LastEditTime: 2019-10-20 21:30:05
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -416,6 +416,14 @@ static int bit_pattern_31_[256*4] =
     -1,-6, 0,-11/*mean (0.127148), correlation (0.547401)*/
 };
 
+//nfeatures表示要在当前图像中提取的ORB特征点的数目
+//为了使ORB特征具备尺度一致性，通过采样多个层级的图像金字塔进行ORB特征提取，
+//scaleFactor表示相邻两层之间ORB特征点数目的倍数，nlevels表示图像金子塔的层数
+//参考TUM1.yaml文件中的参数，每一帧图像共提取1000个特征点，分布在金字塔8层中，层间尺度比例1.2
+//计算下来金字塔0层大约有217个特征点，7层大约有50个特征点
+//在提取FAST角点时，会把中心像素和周围像素之间的亮度差作为判断标准。
+//iniThFAST表示这个 threshold 的初始值，当提取的角点数目不够时，则会采用 minThFAST 作为 threshold。
+
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST):
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
@@ -779,7 +787,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
 {
     allKeypoints.resize(nlevels);
-
+    // 图像分块，分成30x30 然后分别提取
     const float W = 30;
 
     // 对每一层图像做处理

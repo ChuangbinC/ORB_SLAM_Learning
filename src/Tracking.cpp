@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-20 21:33:46
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -323,6 +323,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
  *
  * Tracking 线程
  */
+// TODO: 接下来看这个
 void Tracking::Track()
 {
     // track包含两部分：估计运动、跟踪局部地图
