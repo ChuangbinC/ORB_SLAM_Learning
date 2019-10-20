@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 01:05:39
- * @LastEditTime: 2019-10-19 17:52:12
+ * @LastEditTime: 2019-10-19 19:49:22
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -108,7 +108,9 @@ void Viewer::Run()
     Twc.SetIdentity();
 
     // cv::namedWindow("ORB-SLAM2: Current Frame");
-
+    //TODO: 设置图像改变参数，点云和图像分块显示
+    // 设置rgb图像显示模块
+    /
     pangolin::View& d_image = pangolin::Display("mono")
       .SetBounds(0.5,1.0f,pangolin::Attach::Pix(175),1,1024.0/384.0);
 
@@ -121,7 +123,7 @@ void Viewer::Run()
     bool bFollow = true;
     bool bLocalizationMode = false;
 
-    //初始化
+    //初始化，设置图像显示的宽高，如果图像大于这个设置，会发生段错误
     pangolin::GlTexture imageTexture(1024,384,GL_RGB,false,0,GL_BGR,GL_UNSIGNED_BYTE);
 
 
@@ -171,14 +173,15 @@ void Viewer::Run()
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
 
+        // 下面的图像显示要放在 FinnishFrame 前面，不然无法显示
         cv::Mat im = mpFrameDrawer->DrawFrame();
-        
+        // 要将图像缩放到 imageTexture 设置的大小
         cv::resize(im,im,cv::Size(1024,384));
         imageTexture.Upload(im.data,GL_BGR,GL_UNSIGNED_BYTE);
         d_image.Activate();
         glColor3f(1.0,1.0,1.0);
 
-        // 需要有下面这一句
+        // 需要有下面这一句，不然图像无法显示
         //注意，这里由于Upload函数无法将cv::Mat格式的图片数据作为输入，因此使用opencv的data函数将Mat格式的数据变为uchar格式，但是opencv中Mat存储图片是自下而上的，单纯的渲染所渲染出来的图片是倒置的，因此需使用RenderToViewportFlipY（）函数进行渲染，将原本上下倒置的图片进行自下而上渲染，使显示的图片是正的。
         imageTexture.RenderToViewportFlipY();
 

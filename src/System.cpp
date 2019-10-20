@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-19 21:43:02
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -139,6 +139,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     }   
 
     // Check mode change
+    // 检查是否改变为Localization模式
     {
         unique_lock<mutex> lock(mMutexMode);
         if(mbActivateLocalizationMode)

@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-20 17:35:02
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 * This file is based on the file orb.cpp from the OpenCV library (see BSD license below).
@@ -768,7 +775,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
     return vResultKeys;
 }
-
+// TODO: to read
 void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
 {
     allKeypoints.resize(nlevels);
@@ -1078,6 +1085,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     else
     {
         _descriptors.create(nkeypoints, 32, CV_8U);
+        // getMat 将 OutputArray 转为 Mat类型，因此 descriptors 为 _descriptors的引用
         descriptors = _descriptors.getMat();
     }
 
@@ -1098,9 +1106,10 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
         GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
         // Compute the descriptors 计算描述子
+        // rowRange 是获取Mat指定范围的数据
         Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
         computeDescriptors(workingMat, keypoints, desc, pattern);
-
+        // 下一个descriptor的开头
         offset += nkeypointsLevel;
 
         // Scale keypoint coordinates
@@ -1134,7 +1143,7 @@ void ORBextractor::ComputePyramid(cv::Mat image)
         if( level != 0 )
         {
             resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, cv::INTER_LINEAR);
-
+            // 扩展边界，类似于CNN里面padding 
             copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101+BORDER_ISOLATED);            
         }

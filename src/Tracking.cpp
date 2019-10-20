@@ -1,3 +1,11 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-19 17:55:13
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
+
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -145,6 +153,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     // 在单目初始化的时候，会用mpIniORBextractor来作为特征点提取器
+    // 单目初始化阶段所需的特征点数量需要是后续过程的2倍
     if(sensor==System::MONOCULAR)
         mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
