@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-20 21:30:05
+ * @LastEditTime: 2019-10-21 16:28:41
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -783,7 +783,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
     return vResultKeys;
 }
-// TODO: to read
+
 void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
 {
     allKeypoints.resize(nlevels);

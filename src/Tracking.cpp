@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-20 21:33:46
+ * @LastEditTime: 2019-10-21 17:03:12
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -357,6 +357,7 @@ void Tracking::Track()
     }
     else// 步骤2：跟踪
     {
+        // TODO: Read 5
         // System is initialized. Track Frame.
 
         // bOK为临时变量，用于表示每个函数是否执行成功
@@ -775,6 +776,7 @@ void Tracking::MonocularInitialization()
         // 步骤3：在mInitialFrame与mCurrentFrame中找匹配的特征点对
         // mvbPrevMatched为前一帧的特征点，存储了mInitialFrame中哪些点将进行接下来的匹配
         // mvIniMatches存储mInitialFrame,mCurrentFrame之间匹配的特征点
+        // TODO: Read 1
         ORBmatcher matcher(0.9,true);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
@@ -792,9 +794,11 @@ void Tracking::MonocularInitialization()
         vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
 
         // 步骤5：通过H模型或F模型进行单目初始化，得到两帧间相对运动、初始MapPoints
+        // TODO: Read 2
         if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
         {
             // 步骤6：删除那些无法进行三角化的匹配点
+            // TODO: Read 3 弄懂三角化的意思
             for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
             {
                 if(mvIniMatches[i]>=0 && !vbTriangulated[i])
@@ -817,6 +821,7 @@ void Tracking::MonocularInitialization()
             // Initialize函数会得到mvIniP3D，
             // mvIniP3D是cv::Point3f类型的一个容器，是个存放3D点的临时变量，
             // CreateInitialMapMonocular将3D点包装成MapPoint类型存入KeyFrame和Map中
+            // TODO: Read 4
             CreateInitialMapMonocular();
         }
     }

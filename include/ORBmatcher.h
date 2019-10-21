@@ -1,3 +1,11 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-21 17:07:18
+ * @LastEditTime: 2019-10-21 17:07:18
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
+
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -45,6 +53,7 @@ public:
 
     // Search matches between Frame keypoints and projected MapPoints. Returns number of matches
     // Used to track the local map (Tracking)
+    // TODO: Local map points 是什么
     /**
      * @brief 通过投影，对Local MapPoint进行跟踪
      *

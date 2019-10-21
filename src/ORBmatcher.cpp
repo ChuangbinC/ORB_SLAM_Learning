@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-21 17:26:17
+ * @LastEditTime: 2019-10-21 22:27:18
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -33,15 +40,16 @@ using namespace std;
 
 namespace ORB_SLAM2
 {
-
+// 距离阈值
 const int ORBmatcher::TH_HIGH = 100;
 const int ORBmatcher::TH_LOW = 50;
+// 直方图bin数量
 const int ORBmatcher::HISTO_LENGTH = 30;
 
 /**
  * Constructor
- * @param nnratio  ratio of the best and the second score
- * @param checkOri check orientation
+ * @param nnratio  ratio of the best and the second score  最优匹配 < nnratio*次优匹配
+ * @param checkOri check orientation 是否进行根据方向剔除误匹配的点
  */
 ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbCheckOrientation(checkOri)
 {
@@ -81,7 +89,7 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
         const int &nPredictedLevel = pMP->mnTrackScaleLevel;
 
         // The size of the window will depend on the viewing direction
-        // 搜索窗口的大小取决于视角, 若当前视角和平均视角夹角接近0度时, r取一个较小的值
+        // 搜索窗口的大小取决于视角, 若当前视角和平均视角夹角接近0度时(cos = 1), r取一个较小的值
         float r = RadiusByViewingCos(pMP->mTrackViewCos);
         
         // 如果需要进行更粗糙的搜索，则增大范围
@@ -112,7 +120,7 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
             if(F.mvpMapPoints[idx])
                 if(F.mvpMapPoints[idx]->Observations()>0)
                     continue;
-
+            // 双目相机，投影点误差过大时，退出该次循环
             if(F.mvuRight[idx]>0)
             {
                 const float er = fabs(pMP->mTrackProjXR-F.mvuRight[idx]);
@@ -141,6 +149,7 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
         }
 
         // Apply ratio to second match (only if best and second are in the same scale level)
+        // 当最优特征点和次优特征点在同一尺度，需要判断
         if(bestDist<=TH_HIGH)
         {
             if(bestLevel==bestLevel2 && bestDist>mfNNratio*bestDist2)
@@ -475,7 +484,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
 {
     int nmatches=0;
     vnMatches12 = vector<int>(F1.mvKeysUn.size(),-1);
-
+    
     vector<int> rotHist[HISTO_LENGTH];
     for(int i=0;i<HISTO_LENGTH;i++)
         rotHist[i].reserve(500);
@@ -488,6 +497,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
     {
         cv::KeyPoint kp1 = F1.mvKeysUn[i1];
         int level1 = kp1.octave;
+        // 貌似只取用第一层金字塔的特征点来初始化
         if(level1>0)
             continue;
 
@@ -512,7 +522,7 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
 
             if(vMatchedDistance[i2]<=dist)
                 continue;
-
+            // 找出距离最接近的两个点（一个是最近，一个是第二近）
             if(dist<bestDist)
             {
                 bestDist2=bestDist;
