@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-21 17:26:17
- * @LastEditTime: 2019-10-21 22:27:18
+ * @LastEditTime: 2019-10-22 16:33:17
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -368,9 +368,11 @@ int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapP
 
     // Decompose Scw
     cv::Mat sRcw = Scw.rowRange(0,3).colRange(0,3);
+    // RR^T = I 这里面第一个1 等于第0行乘以本身， 模等于1，因此 s^2RR^T = 1, s= (RR^T)^(1/2)
     const float scw = sqrt(sRcw.row(0).dot(sRcw.row(0)));// 计算得到尺度s
     cv::Mat Rcw = sRcw/scw;
     cv::Mat tcw = Scw.rowRange(0,3).col(3)/scw;// pKF坐标系下，世界坐标系到pKF的位移，方向由世界坐标系指向pKF
+    // R.t = R^(-1)
     cv::Mat Ow = -Rcw.t()*tcw;// 世界坐标系下，pKF到世界坐标系的位移（世界坐标系原点相对pKF的位置），方向由pKF指向世界坐标系
 
     // Set of MapPoints already found in the KeyFrame
@@ -423,7 +425,9 @@ int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapP
         if(dist<minDistance || dist>maxDistance)
             continue;
 
+        // 法向量？
         // Viewing angle must be less than 60 deg
+        // TODO: 下面的计算还是理解不够深刻
         cv::Mat Pn = pMP->GetNormal();
 
         if(PO.dot(Pn)<0.5*dist)
@@ -770,12 +774,13 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
 
     // Compute epipole in second image
     // 计算KF1的相机中心在KF2图像平面的坐标，即极点坐标
+    // TODO: 还不是很理解之间的坐标变换
     cv::Mat Cw = pKF1->GetCameraCenter(); // twc1
     cv::Mat R2w = pKF2->GetRotation();    // Rc2w
     cv::Mat t2w = pKF2->GetTranslation(); // tc2w
     cv::Mat C2 = R2w*Cw+t2w; // tc2c1 KF1的相机中心在KF2坐标系的表示
-    const float invz = 1.0f/C2.at<float>(2);
-    // 步骤0：得到KF1的相机光心在KF2中的坐标（极点坐标）
+    const float invz = 1.0f/C2.at<float>(2); // 1/z
+    // 步骤0：得到KF1的相机光心在KF2中的坐标（极点坐标） 像素坐标系
     const float ex =pKF2->fx*C2.at<float>(0)*invz+pKF2->cx;
     const float ey =pKF2->fy*C2.at<float>(1)*invz+pKF2->cy;
 
@@ -876,6 +881,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
                         const float distex = ex-kp2.pt.x;
                         const float distey = ey-kp2.pt.y;
                         // 该特征点距离极点太近，表明kp2对应的MapPoint距离pKF1相机太近
+                        // TODO: 太近会怎么样
                         if(distex*distex+distey*distey<100*pKF2->mvScaleFactors[kp2.octave])
                             continue;
                     }
@@ -993,7 +999,7 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
 
         if(!pMP)
             continue;
-
+        
         if(pMP->isBad() || pMP->IsInKeyFrame(pKF))
             continue;
 
@@ -1021,11 +1027,11 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
         const float minDistance = pMP->GetMinDistanceInvariance();
         cv::Mat PO = p3Dw-Ow;
         const float dist3D = cv::norm(PO);
-
+        // TODO: 阅读完mappoint后回看一下这里的距离是什么意思
         // Depth must be inside the scale pyramid of the image
         if(dist3D<minDistance || dist3D>maxDistance )
             continue;
-
+        // TODO: view 代表什么
         // Viewing angle must be less than 60 deg
         cv::Mat Pn = pMP->GetNormal();
 
@@ -1133,9 +1139,10 @@ int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoi
     const float &fy = pKF->fy;
     const float &cx = pKF->cx;
     const float &cy = pKF->cy;
-
+    
     // Decompose Scw
     // 将Sim3转化为SE3并分解
+    // TODO: Ow代表什么
     cv::Mat sRcw = Scw.rowRange(0,3).colRange(0,3);
     const float scw = sqrt(sRcw.row(0).dot(sRcw.row(0)));// 计算得到尺度s
     cv::Mat Rcw = sRcw/scw;// 除掉s
@@ -1192,9 +1199,10 @@ int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoi
             continue;
 
         // Viewing angle must be less than 60 deg
-        cv::Mat Pn = pMP->GetNormal();
+        // TODO: 回来理解一下
+        cv::Mat Pn = pMP->GetNormal();// 世界坐标系下相机到3D点的单位向量
 
-        if(PO.dot(Pn)<0.5*dist3D)
+        if(PO.dot(Pn)<0.5*dist3D) // cos = a.b / |a||b|
             continue;
 
         // Compute predicted scale level
@@ -1280,7 +1288,7 @@ int ORBmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &
 
     //Transformation between cameras
     cv::Mat sR12 = s12*R12;
-    cv::Mat sR21 = (1.0/s12)*R12.t();
+    cv::Mat sR21 = (1.0/s12)*R12.t(); // (aR)^-1 = a^(-1) *R.t
     cv::Mat t21 = -sR21*t12;
 
     const vector<MapPoint*> vpMapPoints1 = pKF1->GetMapPointMatches();
@@ -1535,6 +1543,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
     const cv::Mat tlc = Rlw*twc+tlw; // Rlw*twc(w) = twc(l), twc(l) + tlw(l) = tlc(l)
 
     // 判断前进还是后退
+    // TODO: 为什么Z大于基线表示前进
     const bool bForward = tlc.at<float>(2)>CurrentFrame.mb && !bMono; // 非单目情况，如果Z大于基线，则表示前进
     const bool bBackward = -tlc.at<float>(2)>CurrentFrame.mb && !bMono; // 非单目情况，如果Z小于基线，则表示前进
 
@@ -1581,7 +1590,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                     vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
                 else if(bBackward) // 后退,则上一帧兴趣点在所在的尺度0<=nCurOctave<=nLastOctave
                     vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
-                else // 在[nLastOctave-1, nLastOctave+1]中搜索
+                else // 在[nLastOctave-1, nLastOctave+1]中搜索 // Mono ?
                     vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave-1, nLastOctave+1);
 
                 if(vIndices2.empty())

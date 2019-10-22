@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-19 17:55:13
+ * @LastEditTime: 2019-10-22 14:45:44
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -420,6 +420,7 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
                 const cv::KeyPoint &kpUn = mvKeysUn[vCell[j]];
                 if(bCheckLevels)
                 {
+                    // 不在尺度范围内就跳过，不符合要求，不要
                     if(kpUn.octave<minLevel)
                         continue;
                     if(maxLevel>=0)
