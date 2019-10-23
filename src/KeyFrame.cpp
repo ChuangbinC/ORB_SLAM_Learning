@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-23 11:39:53
+ * @LastEditTime: 2019-10-23 15:36:39
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -82,11 +89,11 @@ void KeyFrame::SetPose(const cv::Mat &Tcw_)
     cv::Mat Rwc = Rcw.t();
     Ow = -Rwc*tcw;
 
-    Twc = cv::Mat::eye(4,4,Tcw.type());
+    Twc = cv::Mat::eye(4,4,Tcw.type()); // 相机坐标系到世界坐标系的变换矩阵
     Rwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
     Ow.copyTo(Twc.rowRange(0,3).col(3));
     // center为相机坐标系（左目）下，立体相机中心的坐标
-    // 立体相机中心点坐标与左目相机坐标之间只是在x轴上相差mHalfBaseline,
+    // 立体相机中心点坐标与左目相机坐标之间只是在x轴上相差mHalfBaseline, // f/2
     // 因此可以看出，立体相机中两个摄像头的连线为x轴，正方向为左目相机指向右目相机
     cv::Mat center = (cv::Mat_<float>(4,1) << mHalfBaseline, 0 , 0, 1);
     // 世界坐标系下，左目相机中心到立体相机中心的向量，方向由左目相机指向立体相机中心
@@ -181,6 +188,7 @@ void KeyFrame::UpdateBestCovisibles()
     // 权重从大到小
     mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());
     mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
+
 }
 
 /**
@@ -236,7 +244,7 @@ vector<KeyFrame*> KeyFrame::GetCovisiblesByWeight(const int &w)
 
     // http://www.cplusplus.com/reference/algorithm/upper_bound/
     // 从mvOrderedWeights找出第一个大于w的那个迭代器
-    // 这里应该使用lower_bound，因为lower_bound是返回小于等于，而upper_bound只能返回第一个大于的
+    // 这里应该使用lower_bound，因为lower_bound是返回小于等于，而upper_bound只能返回第一个大于的(没有等于)
     vector<int>::iterator it = upper_bound(mvOrderedWeights.begin(),mvOrderedWeights.end(),w,KeyFrame::weightComp);
     if(it==mvOrderedWeights.end() && *mvOrderedWeights.rbegin()<w)
         return vector<KeyFrame*>();
@@ -332,6 +340,7 @@ int KeyFrame::TrackedMapPoints(const int &minObs)
                         nPoints++;
                 }
                 else
+                    // 不限定阈值，每个点都追踪
                     nPoints++;
             }
         }
@@ -356,7 +365,6 @@ MapPoint* KeyFrame::GetMapPoint(const size_t &idx)
     unique_lock<mutex> lock(mMutexFeatures);
     return mvpMapPoints[idx];
 }
-
 /**
  * @brief 更新图的连接
  * 
@@ -378,6 +386,7 @@ void KeyFrame::UpdateConnections()
     {
         // 获得该关键帧的所有3D点
         unique_lock<mutex> lockMPs(mMutexFeatures);
+        //为什么需要一个局部变量? 因为mvpMapPoints会不断地被其他线程引用，不断变化，因此需要锁住，然后用局部变量来浅拷贝
         vpMP = mvpMapPoints;
     }
 
@@ -470,6 +479,7 @@ void KeyFrame::UpdateConnections()
         mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());
         mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
 
+        // TODO: 看完论文回看这个段
         // 更新生成树的连接
         if(mbFirstConnection && mnId!=0)
         {
@@ -605,6 +615,7 @@ void KeyFrame::SetBadFlag()
                 KeyFrame* pKF = *sit;
                 if(pKF->isBad())
                     continue;
+                // TODO: reading this
 
                 // Check if a parent candidate is connected to the keyframe
                 // 子关键帧遍历每一个与它相连的关键帧（共视关键帧）

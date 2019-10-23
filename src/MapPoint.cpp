@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-23 09:36:05
+ * @LastEditTime: 2019-10-23 15:16:38
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -48,6 +55,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
     mNormalVector = cv::Mat::zeros(3,1,CV_32F);
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
+    // MapPoints会在跟踪阶段以及局部构图阶段创建，又因为nNextId是静态变量，会同时受到修改，因此需要采用锁来保护
     unique_lock<mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
@@ -69,6 +77,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
 {
     Pos.copyTo(mWorldPos);
     cv::Mat Ow = pFrame->GetCameraCenter();
+    // TODO: 一个3D点只拥有一个相机的法线
     mNormalVector = mWorldPos - Ow;// 世界坐标系下相机到3D点的向量
     mNormalVector = mNormalVector/cv::norm(mNormalVector);// 世界坐标系下相机到3D点的单位向量
 
@@ -189,8 +198,11 @@ void MapPoint::SetBadFlag()
         unique_lock<mutex> lock2(mMutexPos);
         mbBad=true;
         obs = mObservations;// 把mObservations转存到obs，obs和mObservations里存的是指针，赋值过程为浅拷贝
-        mObservations.clear();// 把mObservations指向的内存释放，obs作为局部变量之后自动删除
+        mObservations.clear();// 把mObservations指向的内存（仅包括指针本身内存）释放，obs作为局部变量之后自动删除
+        // 只需要清除指针本身的内存，keyFrame不用清除，因为map里面只是放指针，其他地方还需要用到这个KeyFrame
     }
+
+
     for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
@@ -296,7 +308,8 @@ float MapPoint::GetFoundRatio()
  * @brief 计算具有代表的描述子
  *
  * 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要判断是否更新当前点的最适合的描述子 \n
- * 先获得当前点的所有描述子，然后计算描述子之间的两两距离，最好的描述子与其他描述子应该具有最小的距离中值
+ * 先获得当前点的所有描述子，然后计算描述子之间的两两距离，最好的描述子与其他描述子应该具有最小的距离**中值** 
+ * 这里使用的是所有距离的中值，而不是平均值
  * @see III - C3.3
  */
 void MapPoint::ComputeDistinctiveDescriptors()
@@ -452,6 +465,7 @@ void MapPoint::UpdateNormalAndDepth()
         // 另见PredictScale函数前的注释
         mfMaxDistance = dist*levelScaleFactor;                           // 观测到该点的距离下限
         mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1]; // 观测到该点的距离上限
+        // TODO: 平均方向，跟初始化时候的那个方向有什么关系，跟60度视角有什么关系
         mNormalVector = normal/n;                                        // 获得平均的观测方向
     }
 }

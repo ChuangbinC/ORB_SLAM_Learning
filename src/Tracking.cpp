@@ -801,6 +801,7 @@ void Tracking::MonocularInitialization()
             // TODO: Read 3 弄懂三角化的意思
             for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
             {
+                //存在这匹配但又不能三角化的点，去掉
                 if(mvIniMatches[i]>=0 && !vbTriangulated[i])
                 {
                     mvIniMatches[i]=-1;
@@ -1762,7 +1763,7 @@ void Tracking::UpdateLocalKeyFrames()
 bool Tracking::Relocalization()
 {
     // Compute Bag of Words Vector
-    // 步骤1：计算当前帧特征点的Bow映射
+    // 步�����������������1：计算当前帧特征点的Bow映射
     mCurrentFrame.ComputeBoW();
 
     // Relocalization is performed when tracking is lost
