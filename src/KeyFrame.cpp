@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-23 11:39:53
- * @LastEditTime: 2019-10-23 15:36:39
+ * @LastEditTime: 2019-10-24 14:45:35
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -585,7 +585,7 @@ void KeyFrame::SetBadFlag()
     for(size_t i=0; i<mvpMapPoints.size(); i++)
         if(mvpMapPoints[i])
             mvpMapPoints[i]->EraseObservation(this);// 让与自己有联系的MapPoint删除与自己的联系
-
+    // TODO: 不是很懂这一段的逻辑
     {
         unique_lock<mutex> lock(mMutexConnections);
         unique_lock<mutex> lock1(mMutexFeatures);
@@ -615,7 +615,7 @@ void KeyFrame::SetBadFlag()
                 KeyFrame* pKF = *sit;
                 if(pKF->isBad())
                     continue;
-                // TODO: reading this
+                
 
                 // Check if a parent candidate is connected to the keyframe
                 // 子关键帧遍历每一个与它相连的关键帧（共视关键帧）
@@ -624,6 +624,7 @@ void KeyFrame::SetBadFlag()
                 {
                     for(set<KeyFrame*>::iterator spcit=sParentCandidates.begin(), spcend=sParentCandidates.end(); spcit!=spcend; spcit++)
                     {
+
                     // 如果该帧的子节点和父节点（祖孙节点）之间存在连接关系（共视）
                     // 举例：B-->A（B的父节点是A） C-->B（C的父节点是B） D--C（D与C相连） E--C（E与C相连） F--C（F与C相连） D-->A（D的父节点是A） E-->A（E的父节点是A）
                     //      现在B挂了，于是C在与自己相连的D、E、F节点中找到父节点指向A的D
@@ -765,6 +766,7 @@ cv::Mat KeyFrame::UnprojectStereo(int i)
         // mvDepth对应的校正前的特征点，因此这里对校正前特征点反投影
         // 可在Frame::UnprojectStereo中却是对校正后的特征点mvKeysUn反投影
         // 在ComputeStereoMatches函数中应该对校正后的特征点求深度？？ (wubo???)
+        // TODO: 跟Frame里面的同名算法不一致
         const float u = mvKeys[i].pt.x;
         const float v = mvKeys[i].pt.y;
         const float x = (u-cx)*z*invfx;
