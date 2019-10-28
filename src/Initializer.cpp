@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-25 16:08:02
+ * @LastEditTime: 2019-10-27 14:52:47
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -191,7 +198,8 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
         {
             int idx = mvSets[it][j];
 
-            // vPn1i和vPn2i为匹配的特征点对的坐标
+            // vPn1i和vPn2i为匹配的特征点对的坐标 
+            // vPn1 和 vPn2 是特征点归一化后坐标
             vPn1i[j] = vPn1[mvMatches12[idx].first];
             vPn2i[j] = vPn2[mvMatches12[idx].second];
         }
@@ -255,7 +263,7 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
         }
 
         cv::Mat Fn = ComputeF21(vPn1i,vPn2i);
-
+        // 恢复原始的均值和尺度
         F21i = T2t*Fn*T1;
 
         // 利用重投影误差为当次RANSAC的结果评分
@@ -279,7 +287,7 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
 // ---> Ah = 0
 // A = | 0  0  0 -x -y -1 xy' yy' y'|  h = | h1 h2 h3 h4 h5 h6 h7 h8 h9 |
 //     |-x -y -1  0  0  0 xx' yx' x'|
-// 通过SVD求解Ah = 0，A'A最小特征值对应的特征向量即为解
+// 通过SVD求解Ah = 0，A'A最小特征值对应的特征向量即为解 特征值分解
 
 /**
  * @brief 从特征点匹配求homography（normalized DLT）
@@ -333,7 +341,7 @@ cv::Mat Initializer::ComputeH21(const vector<cv::Point2f> &vP1, const vector<cv:
 
 // x'Fx = 0 整理可得：Af = 0
 // A = | x'x x'y x' y'x y'y y' x y 1 |, f = | f1 f2 f3 f4 f5 f6 f7 f8 f9 |
-// 通过SVD求解Af = 0，A'A最小特征值对应的特征向量即为解
+// 通过SVD求解Af = 0，A'A最小特征值对应的特征向量即为解 （特征值分解）
 
 /**
  * @brief 从特征点匹配求fundamental matrix（normalized 8点法）
@@ -369,14 +377,14 @@ cv::Mat Initializer::ComputeF21(const vector<cv::Point2f> &vP1,const vector<cv::
     cv::Mat u,w,vt;
 
     cv::SVDecomp(A,w,u,vt,cv::SVD::MODIFY_A | cv::SVD::FULL_UV);
-
+    // F 基础矩阵的秩为2 需要再次SVD分解后 取对角矩阵 设置秩为2，最后再合成F
     cv::Mat Fpre = vt.row(8).reshape(0, 3); // v的最后一列
 
     cv::SVDecomp(Fpre,w,u,vt,cv::SVD::MODIFY_A | cv::SVD::FULL_UV);
 
     w.at<float>(2)=0; // 秩2约束，将第3个奇异值设为0
 
-    return  u*cv::Mat::diag(w)*vt;
+    return  u*cv::Mat::diag(w)*vt; // 再合成为F
 }
 
 /**
@@ -446,6 +454,7 @@ float Initializer::CheckHomography(const cv::Mat &H21, const cv::Mat &H12, vecto
         // |u1|   |h11inv h12inv h13inv||u2|
         // |v1| = |h21inv h22inv h23inv||v2|
         // |1 |   |h31inv h32inv h33inv||1 |
+        // w2in1inv 是归一化坐标吗？
         const float w2in1inv = 1.0/(h31inv*u2+h32inv*v2+h33inv);
         const float u2in1 = (h11inv*u2+h12inv*v2+h13inv)*w2in1inv;
         const float v2in1 = (h21inv*u2+h22inv*v2+h23inv)*w2in1inv;
@@ -608,6 +617,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 
     // Recover the 4 motion hypotheses
     // 虽然这个函数对t有归一化，但并没有决定单目整个SLAM过程的尺度
+    // TODO: 下面啥意思
     // 因为CreateInitialMapMonocular函数对3D点深度会缩放，然后反过来对 t 有改变
     DecomposeE(E21,R1,R2,t);  
 
@@ -644,6 +654,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 
     // If there is not a clear winner or not enough triangulated points reject initialization
     // 四个结果中如果没有明显的最优结果，则返回失败
+    // nsimilar>1 表示有至少两种情况接近，至少nsimilar=2时候会失败
     if(maxGood<nMinGood || nsimilar>1)
     {
         return false;
@@ -651,6 +662,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 
     // If best reconstruction has enough parallax initialize
     // 比较大的视差角
+    // TODO: 为什么视差角要大于50
     if(maxGood==nGood1)
     {
         if(parallax1>minParallax)
@@ -704,6 +716,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 // 参考文献：Motion and structure from motion in a piecewise plannar environment
 // 这篇参考文献和下面的代码使用了Faugeras SVD-based decomposition算法
 
+// 
 /**
  * @brief 从H恢复R t
  *
@@ -714,6 +727,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv::Mat &K,
                       cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
 {
+    // TODO: 有空再认真看看
     int N=0;
     for(size_t i=0, iend = vbMatchesInliers.size() ; i<iend; i++)
         if(vbMatchesInliers[i])
@@ -723,6 +737,9 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
     // Motion and structure from motion in a piecewise planar environment.
     // International Journal of Pattern Recognition and Artificial Intelligence, 1988
 
+    // 为什么 H 矩阵是在相机坐标系的？
+    // 参考 这两个：https://cloud.tencent.com/developer/article/1483521
+    // https://www.cnblogs.com/wangguchangqing/p/8287585.html
     // 因为特征点是图像坐标系，所以讲H矩阵由相机坐标系换算到图像坐标系
     cv::Mat invK = K.inv();
     cv::Mat A = invK*H21*K;
@@ -921,7 +938,8 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
 // |yp2  - p1 | X = |0| ===> AX = 0
 // |x'p2'- p0'|     |0|
 // |y'p2'- p1'|     |0|
-
+// https://blog.csdn.net/zzzblog/article/details/17097377
+// https://blog.csdn.net/kokerf/article/details/72844455
 /**
  * @brief 给定投影矩阵P1,P2和图像上的点kp1,kp2，从而恢复3D坐标
  *
@@ -949,8 +967,8 @@ void Initializer::Triangulate(const cv::KeyPoint &kp1, const cv::KeyPoint &kp2, 
     cv::Mat u,w,vt;
     cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
     x3D = vt.row(3).t();
-    x3D = x3D.rowRange(0,3)/x3D.at<float>(3);
 }
+
 
 /**
  * ＠brief 归一化特征点到同一尺度（作为normalize DLT的输入）
@@ -1049,6 +1067,8 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
     t.copyTo(P2.rowRange(0,3).col(3));
     P2 = K*P2;
     // 第二个相机的光心在世界坐标系下的坐标
+    // Oc = (0,0,0) Oc = Rcw*Ow+tcw --> -tcw = Rcw*Ow --> Ow = -Rcw.t()*tcw
+    // R.t = R^(-1)
     cv::Mat O2 = -R.t()*t;
 
     int nGood=0;
@@ -1065,7 +1085,7 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
 
         // 步骤3：利用三角法恢复三维点p3dC1
         Triangulate(kp1,kp2,P1,P2,p3dC1);
-
+        // isfinite 判断某个数是不是有限的数
         if(!isfinite(p3dC1.at<float>(0)) || !isfinite(p3dC1.at<float>(1)) || !isfinite(p3dC1.at<float>(2)))
         {
             vbGood[vMatches12[i].first]=false;
@@ -1086,6 +1106,7 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
 
         // Check depth in front of first camera (only if enough parallax, as "infinite" points can easily go to negative depth)
         // 步骤5.1：3D点深度为负，在第一个摄像头后方，淘汰
+        // TODO: 为什么是 角度=0
         if(p3dC1.at<float>(2)<=0 && cosParallax<0.99998)
             continue;
 
@@ -1099,7 +1120,7 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
         // 步骤6：计算重投影误差
 
         // Check reprojection error in first image
-        // 计算3D点在第一个图像上的投影误差
+        // 计算3D点在第一个图像上的投影误差；
         float im1x, im1y;
         float invZ1 = 1.0/p3dC1.at<float>(2);
         im1x = fx*p3dC1.at<float>(0)*invZ1+cx;

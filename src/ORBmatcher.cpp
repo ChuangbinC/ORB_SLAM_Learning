@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-21 17:26:17
- * @LastEditTime: 2019-10-23 14:44:23
+ * @LastEditTime: 2019-10-26 10:23:30
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -374,6 +374,7 @@ int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapP
     cv::Mat Rcw = sRcw/scw;
     cv::Mat tcw = Scw.rowRange(0,3).col(3)/scw;// pKF坐标系下，世界坐标系到pKF的位移，方向由世界坐标系指向pKF
     // R.t = R^(-1)
+    // Oc = (0,0,0) Oc = Rcw*Ow+tcw --> -tcw = Rcw*Ow --> Ow = -Rcw.t()*tcw
     cv::Mat Ow = -Rcw.t()*tcw;// 世界坐标系下，pKF到世界坐标系的位移（世界坐标系原点相对pKF的位置），方向由pKF指向世界坐标系
 
     // Set of MapPoints already found in the KeyFrame
