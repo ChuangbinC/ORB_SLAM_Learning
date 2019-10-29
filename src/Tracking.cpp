@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-21 17:03:12
+ * @LastEditTime: 2019-10-29 14:40:06
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -323,7 +323,6 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
  *
  * Tracking 线程
  */
-// TODO: 接下来看这个
 void Tracking::Track()
 {
     // track包含两部分：估计运动、跟踪局部地图
@@ -364,7 +363,7 @@ void Tracking::Track()
         bool bOK;
 
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
-        // 在viewer中有个开关menuLocalizationMode，有它控制是否ActivateLocalizationMode，并最终管控mbOnlyTracking
+        // 在viewer中有个开关menuLocalizationMode，由它控制是否Activate LocalizationMode，并最终管控mbOnlyTracking
         // mbOnlyTracking等于false表示正常VO模式（有地图更新），mbOnlyTracking等于true表示用户手动选择定位模式
         if(!mbOnlyTracking)
         {
@@ -519,7 +518,8 @@ void Tracking::Track()
             // mbVO true means that there are few matches to MapPoints in the map. We cannot retrieve
             // a local map and therefore we do not perform TrackLocalMap(). Once the system relocalizes
             // the camera we will use the local map again.
-
+            // mbVO true表示地图中与MapPoints的匹配很少。 我们无法检索本地地图，因此不执行TrackLocalMap（）。
+            // 系统将摄像机重新定位后，我们将再次使用本地地图。
             // 重定位成功
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
@@ -578,6 +578,7 @@ void Tracking::Track()
 
             // Check if we need to insert a new keyframe
             // 步骤2.6：检测并插入关键帧，对于双目会产生新的MapPoints
+            // TODO: 读到这里 10.29
             if(NeedNewKeyFrame())
                 CreateNewKeyFrame();
 
@@ -776,7 +777,6 @@ void Tracking::MonocularInitialization()
         // 步骤3：在mInitialFrame与mCurrentFrame中找匹配的特征点对
         // mvbPrevMatched为前一帧的特征点，存储了mInitialFrame中哪些点将进行接下来的匹配
         // mvIniMatches存储mInitialFrame,mCurrentFrame之间匹配的特征点
-        // TODO: Read 1
         ORBmatcher matcher(0.9,true);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
 
@@ -794,7 +794,6 @@ void Tracking::MonocularInitialization()
         vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
 
         // 步骤5：通过H模型或F模型进行单目初始化，得到两帧间相对运动、初始MapPoints
-        // TODO: Read 2
         if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
         {
             // 步骤6：删除那些无法进行三角化的匹配点
@@ -822,7 +821,6 @@ void Tracking::MonocularInitialization()
             // Initialize函数会得到mvIniP3D，
             // mvIniP3D是cv::Point3f类型的一个容器，是个存放3D点的临时变量，
             // CreateInitialMapMonocular将3D点包装成MapPoint类型存入KeyFrame和Map中
-            // TODO: Read 4
             CreateInitialMapMonocular();
         }
     }
@@ -1050,12 +1048,14 @@ void Tracking::UpdateLastFrame()
 {
     // Update pose according to reference keyframe
     // 步骤1：更新最近一帧的位姿
+    // TODO: 参考帧选择条件
     KeyFrame* pRef = mLastFrame.mpReferenceKF;
     cv::Mat Tlr = mlRelativeFramePoses.back();
 
     mLastFrame.SetPose(Tlr*pRef->GetPose()); // Tlr*Trw = Tlw 1:last r:reference w:world
 
     // 如果上一帧为关键帧，或者单目的情况，则退出
+    // TODO: 为什么上一帧为关键帧就退出？
     if(mnLastKeyFrameId==mLastFrame.mnId || mSensor==System::MONOCULAR)
         return;
 
@@ -1148,11 +1148,11 @@ bool Tracking::TrackWithMotionModel()
     // 步骤1：对于双目或rgbd摄像头，根据深度值为上一关键帧生成新的MapPoints
     // （跟踪过程中需要将当前帧与上一帧进行特征点匹配，将上一帧的MapPoints投影到当前帧可以缩小匹配范围）
     // 在跟踪过程中，去除outlier的MapPoint，如果不及时增加MapPoint会逐渐减少
-    // 这个函数的功能就是补充增加RGBD和双目相机上一帧的MapPoints数
+    // 这个函数的功能就是补充增加RGBD和双目相机上一帧的MapPoints数，这些MapPoint仅仅为了提高双目和RGBD的跟踪成功率
     UpdateLastFrame();
 
     // 根据Const Velocity Model(认为这两帧之间的相对运动和之前两帧间相对运动相同)估计当前帧的位姿
-    mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw);
+    mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw); // mVelocity = Tcl
 
     fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
 
@@ -1200,6 +1200,7 @@ bool Tracking::TrackWithMotionModel()
                 nmatches--;
             }
             else if(mCurrentFrame.mvpMapPoints[i]->Observations()>0)
+                // 能被相机观测到的点
                 nmatchesMap++;
         }
     }    
@@ -1291,7 +1292,7 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 
     // If Local Mapping is freezed by a Loop Closure do not insert keyframes
-    // 如果局部地图被闭环检测使用，则不插入关键帧
+    // 如果局部地图被闭环检测冻结，则不插入关键帧
     if(mpLocalMapper->isStopped() || mpLocalMapper->stopRequested())
         return false;
 
@@ -1342,6 +1343,7 @@ bool Tracking::NeedNewKeyFrame()
     else
     {
         // There are no visual odometry matches in the monocular case
+        // TODO: 单目就没有 VO match吗？
         nMap=1;
         nTotal=1;
     }
@@ -1355,7 +1357,7 @@ bool Tracking::NeedNewKeyFrame()
     if(nKFs<2)
         thRefRatio = 0.4f;// 关键帧只有一帧，那么插入关键帧的阈值设置很低
     if(mSensor==System::MONOCULAR)
-        thRefRatio = 0.9f;
+        thRefRatio = 0.9f; // 
 
     // MapPoints中和地图关联的比例阈值
     float thMapRatio = 0.35f;
@@ -1373,6 +1375,7 @@ bool Tracking::NeedNewKeyFrame()
     const bool c1c =  mSensor!=System::MONOCULAR && (mnMatchesInliers<nRefMatches*0.25 || ratioMap<0.3f) ;
     // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
     // 阈值比c1c要高，与之前参考帧（最近的一个关键帧）重复度不是太高
+    // 感觉阈值高，条件就宽松，单目情况下，条件比双目要宽松
     const bool c2 = ((mnMatchesInliers<nRefMatches*thRefRatio || ratioMap<thMapRatio) && mnMatchesInliers>15);
 
     if((c1a||c1b||c1c)&&c2)
@@ -1386,6 +1389,7 @@ bool Tracking::NeedNewKeyFrame()
         else
         {
             mpLocalMapper->InterruptBA();
+            // TODO: 为什么单目的情况下就直接rerun false
             if(mSensor!=System::MONOCULAR)
             {
                 // 队列里不能阻塞太多关键帧
@@ -1667,6 +1671,7 @@ void Tracking::UpdateLocalKeyFrames()
 
     // 步骤2：更新局部关键帧（mvpLocalKeyFrames），添加局部关键帧有三个策略
     // 先清空局部关键帧
+    // 局部关键帧 是 keyframeCounter 的3倍？
     mvpLocalKeyFrames.clear();
     mvpLocalKeyFrames.reserve(3*keyframeCounter.size());
 
@@ -1763,7 +1768,7 @@ void Tracking::UpdateLocalKeyFrames()
 bool Tracking::Relocalization()
 {
     // Compute Bag of Words Vector
-    // 步�����������������1：计算当前帧特征点的Bow映射
+    // 步骤1：计算当前帧特征点的Bow映射
     mCurrentFrame.ComputeBoW();
 
     // Relocalization is performed when tracking is lost
