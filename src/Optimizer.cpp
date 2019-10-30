@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-29 19:20:20
+ * @LastEditTime: 2019-10-29 20:10:15
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -172,6 +179,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
             }
             else// 双目相机
             {
+                // 双目相机的 obs是三维向量 优化的是 ul,v,ur
                 Eigen::Matrix<double,3,1> obs;
                 const float kp_ur = pKF->mvuRight[mit->second];
                 obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
@@ -884,6 +892,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     }
 }
 
+// TODO: 看完闭环后再看
 /**
  * @brief 闭环检测后，EssentialGraph优化
  *

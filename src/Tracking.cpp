@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-29 14:40:06
+ * @LastEditTime: 2019-10-31 00:37:49
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -356,7 +356,6 @@ void Tracking::Track()
     }
     else// 步骤2：跟踪
     {
-        // TODO: Read 5
         // System is initialized. Track Frame.
 
         // bOK为临时变量，用于表示每个函数是否执行成功
@@ -396,6 +395,7 @@ void Tracking::Track()
                     // 根据恒速模型设定当前帧的初始位姿
                     // 通过投影的方式在参考帧中找当前帧特征点的匹配点
                     // 优化每个特征点所对应3D点的投影误差即可得到位姿
+                    // 恒速模型计算位姿并没有用到PnP
                     bOK = TrackWithMotionModel();
                     if(!bOK)
                         // TrackReferenceKeyFrame是跟踪参考帧，不能根据固定运动速度模型预测当前帧的位姿态，通过bow加速匹配（SearchByBow）
@@ -577,8 +577,9 @@ void Tracking::Track()
             mlpTemporalPoints.clear();
 
             // Check if we need to insert a new keyframe
-            // 步骤2.6：检测并插入关键帧，对于双目会产生新的MapPoints
+            // 步骤2.6：检测并插入关键帧，对于双目会产生新的MapPoints，但是不会添加到Map里面？？
             // TODO: 读到这里 10.29
+            // TODO: 上面说不插入到Map里面，但是下面有插入到地图中的操作
             if(NeedNewKeyFrame())
                 CreateNewKeyFrame();
 
@@ -797,7 +798,6 @@ void Tracking::MonocularInitialization()
         if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
         {
             // 步骤6：删除那些无法进行三角化的匹配点
-            // TODO: Read 3 弄懂三角化的意思
             for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
             {
                 //存在这匹配但又不能三角化的点，去掉
@@ -1436,7 +1436,7 @@ void Tracking::CreateNewKeyFrame()
         // We sort points by the measured depth by the stereo/RGBD sensor.
         // We create all those MapPoints whose depth < mThDepth.
         // If there are less than 100 close points we create the 100 closest.
-        // 步骤3.1：得到当前帧深度小于阈值的特征点
+        // 步骤3.1：得到当前帧深度小于阈值的特征点，因为近的点深度更加准确
         // 创建新的MapPoint, depth < mThDepth
         vector<pair<float,int> > vDepthIdx;
         vDepthIdx.reserve(mCurrentFrame.N);
