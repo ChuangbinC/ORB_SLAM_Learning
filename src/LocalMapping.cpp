@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-11-03 11:18:03
+ * @LastEditTime: 2019-11-03 21:06:40
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -171,7 +178,7 @@ bool LocalMapping::CheckNewKeyFrames()
 void LocalMapping::ProcessNewKeyFrame()
 {
     // 步骤1：从缓冲队列中取出一帧关键帧
-    // Tracking线程向LocalMapping中插入关键帧存在该队列中
+    // Tracking线程向LocalMapping中插入的关键帧存在该队列中
     {
         unique_lock<mutex> lock(mMutexNewKFs);
         // 从列表中获得一个等待被插入的关键帧
@@ -184,6 +191,7 @@ void LocalMapping::ProcessNewKeyFrame()
     mpCurrentKeyFrame->ComputeBoW();
 
     // Associate MapPoints to the new keyframe and update normal and descriptor
+    // TODO: Tracking 中 TrackingLocalMap 没有绑定吗？
     // 步骤3：跟踪局部地图过程中新匹配上的MapPoints和当前关键帧绑定
     // 在TrackLocalMap函数中将局部地图中的MapPoints与当前帧进行了匹配，
     // 但没有对这些匹配上的MapPoints与当前帧进行关联
@@ -605,6 +613,7 @@ void LocalMapping::SearchInNeighbors()
         pKFi->mnFuseTargetForKF = mpCurrentKeyFrame->mnId;// 并标记已经加入
 
         // Extend to some second neighbors
+        // 找到二级相邻关键帧
         const vector<KeyFrame*> vpSecondNeighKFs = pKFi->GetBestCovisibilityKeyFrames(5);
         for(vector<KeyFrame*>::const_iterator vit2=vpSecondNeighKFs.begin(), vend2=vpSecondNeighKFs.end(); vit2!=vend2; vit2++)
         {
@@ -855,6 +864,7 @@ void LocalMapping::KeyFrameCulling()
 
                             // Scale Condition 
                             // 尺度约束，要求MapPoint在该局部关键帧的特征尺度大于（或近似于）其它关键帧的特征尺度
+                            // TODO: 为啥尺度要大于或等于 
                             if(scaleLeveli<=scaleLevel+1)
                             {
                                 nObs++;

@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-21 17:26:17
- * @LastEditTime: 2019-10-26 10:23:30
+ * @LastEditTime: 2019-11-04 01:29:59
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -1029,7 +1029,6 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
         const float minDistance = pMP->GetMinDistanceInvariance();
         cv::Mat PO = p3Dw-Ow;
         const float dist3D = cv::norm(PO);
-        // TODO: 阅读完mappoint后回看一下这里的距离是什么意思
         // Depth must be inside the scale pyramid of the image
         if(dist3D<minDistance || dist3D>maxDistance )
             continue;

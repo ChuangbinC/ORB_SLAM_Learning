@@ -1,3 +1,10 @@
+/*
+ * @Author: Chuangbin Chen
+ * @Date: 2019-10-31 15:18:50
+ * @LastEditTime: 2019-10-31 16:48:37
+ * @LastEditors: Do not edit
+ * @Description: 
+ */
 /**
 * This file is part of ORB-SLAM2.
 * This file is a modified version of EPnP <http://cvlab.epfl.ch/EPnP/index.php>, see FreeBSD license below.
@@ -53,6 +60,7 @@
 // https://en.wikipedia.org/wiki/Perspective-n-Point
 // http://docs.ros.org/fuerte/api/re_vision/html/classepnp.html
 // 如果不理解，可以看看中文的："摄像机位姿的高精度快速求解" "摄像头位姿的加权线性算法"
+// https://zhuanlan.zhihu.com/p/59070440
 
 // PnP求解：已知世界坐标系下的3D点与图像坐标系对应的2D点，求解相机的外参(R t)，即从世界坐标系到相机坐标系的变换。
 // 而EPnP的思想是：
@@ -61,7 +69,7 @@
 
 
 //                                   |x|
-//   |u|   |fx r  u0||r11 r12 r13 t1||y|
+//   |u|   |fx 0  u0||r11 r12 r13 t1||y|
 // s |v| = |0  fy v0||r21 r22 r23 t2||z|
 //   |1|   |0  0  1 ||r32 r32 r33 t3||1|
 
@@ -428,6 +436,7 @@ void PnPsolver::choose_control_points(void)
   // 步骤1：第一个控制点：参与PnP计算的参考3D点的几何中心
   cws[0][0] = cws[0][1] = cws[0][2] = 0;
   for(int i = 0; i < number_of_correspondences; i++)
+  // 求质心 [all(x)/n,all(y)/n,all(z)/n]
     for(int j = 0; j < 3; j++)
       cws[0][j] += pws[3 * i + j];
 
