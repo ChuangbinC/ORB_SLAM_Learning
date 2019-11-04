@@ -245,7 +245,7 @@ bool LoopClosing::DetectLoop()
 
     // Add Current Keyframe to database
     mpKeyFrameDB->add(mpCurrentKF);
-
+    // TODO: mpCurrentKF为什么SetErase
     if(mvpEnoughConsistentCandidates.empty())
     {
         mpCurrentKF->SetErase();
@@ -255,7 +255,7 @@ bool LoopClosing::DetectLoop()
     {
         return true;
     }
-
+    // TODO: 这里是不是多余了
     mpCurrentKF->SetErase();
     return false;
 }
