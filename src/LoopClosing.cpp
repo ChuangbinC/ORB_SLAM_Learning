@@ -245,7 +245,7 @@ bool LoopClosing::DetectLoop()
 
     // Add Current Keyframe to database
     mpKeyFrameDB->add(mpCurrentKF);
-    // TODO: mpCurrentKF为什么SetErase
+    // mpCurrentKF为什么SetErase，这里表示关键帧是可以被删除的，程序一开始将关键帧设置为不可删除，所以结束的时候应该设置回来
     if(mvpEnoughConsistentCandidates.empty())
     {
         mpCurrentKF->SetErase();
@@ -255,7 +255,6 @@ bool LoopClosing::DetectLoop()
     {
         return true;
     }
-    // TODO: 这里是不是多余了
     mpCurrentKF->SetErase();
     return false;
 }
@@ -303,6 +302,7 @@ bool LoopClosing::ComputeSim3()
         if(pKF->isBad())
         {
             vbDiscarded[i] = true;// 直接将该候选帧舍弃
+            // pKF->SetErase(); // 是否缺少这个？
             continue;
         }
 
@@ -314,6 +314,7 @@ bool LoopClosing::ComputeSim3()
         if(nmatches<20)
         {
             vbDiscarded[i] = true;
+            // pKF->SetErase(); // 是否缺少这个？
             continue;
         }
         else
@@ -335,7 +336,7 @@ bool LoopClosing::ComputeSim3()
     // Perform alternatively RANSAC iterations for each candidate
     // until one is succesful or all fail
     // 一直循环所有的候选帧，每个候选帧迭代5次，如果5次迭代后得不到结果，就换下一个候选帧
-    // 直到有一个候选帧首次迭代成功bMatch为true，或者某个候选帧总的迭代次数超过限制，直接将它剔除
+    // 直到有一个候选帧首次迭代成功bMatch为true，或者某个候选帧总的迭代次数超过限制，直接将它剔除 
     while(nCandidates>0 && !bMatch)
     {
         for(int i=0; i<nInitialCandidates; i++)
@@ -572,6 +573,7 @@ void LoopClosing::CorrectLoop()
             cv::Mat Riw = Tiw.rowRange(0,3).colRange(0,3);
             cv::Mat tiw = Tiw.rowRange(0,3).col(3);
             g2o::Sim3 g2oSiw(Converter::toMatrix3d(Riw),Converter::toVector3d(tiw),1.0);
+
             // Pose without correction
             // 当前帧相连关键帧，没有进行闭环g2o优化的位姿
             NonCorrectedSim3[pKFi]=g2oSiw;
@@ -613,6 +615,7 @@ void LoopClosing::CorrectLoop()
 
             // Update keyframe pose with corrected Sim3. First transform Sim3 to SE3 (scale translation)
             // 步骤2.3：将Sim3转换为SE3，根据更新的Sim3，更新关键帧的位姿
+            // TODO: 地图点就是Sim3? 关键帧就是SE3?
             Eigen::Matrix3d eigR = g2oCorrectedSiw.rotation().toRotationMatrix();
             Eigen::Vector3d eigt = g2oCorrectedSiw.translation();
             double s = g2oCorrectedSiw.scale();
@@ -627,7 +630,7 @@ void LoopClosing::CorrectLoop()
             // 步骤2.4：根据共视关系更新当前帧与其它关键帧之间的连接
             pKFi->UpdateConnections();
         }
-
+        // TODO: 11.05 读到这里
         // Start Loop Fusion
         // Update matched map points and replace if duplicated
         // 步骤3：检查当前帧的MapPoints与闭环匹配帧的MapPoints是否存在冲突，对冲突的MapPoints进行替换或填补

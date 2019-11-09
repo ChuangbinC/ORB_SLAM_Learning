@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-23 11:39:53
- * @LastEditTime: 2019-10-24 14:45:35
+ * @LastEditTime: 2019-11-08 00:52:52
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -194,6 +194,7 @@ void KeyFrame::UpdateBestCovisibles()
 /**
  * @brief 得到与该关键帧连接的关键帧
  * @return 连接的关键帧
+ * mConnectedKeyFrameWeights 返回的是所有跟本帧有权重连接的帧，不管这个权重是多少
  */
 set<KeyFrame*> KeyFrame::GetConnectedKeyFrames()
 {
@@ -207,6 +208,7 @@ set<KeyFrame*> KeyFrame::GetConnectedKeyFrames()
 /**
  * @brief 得到与该关键帧连接的关键帧(已按权值排序)
  * @return 连接的关键帧
+ * mvpOrderedConnectedKeyFrames 保存的是超过一定阈值的关键帧，跟上面不一样
  */
 vector<KeyFrame*> KeyFrame::GetVectorCovisibleKeyFrames()
 {
