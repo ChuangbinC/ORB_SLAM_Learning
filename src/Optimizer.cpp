@@ -947,6 +947,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 
     // Set KeyFrame vertices
     // 步骤2：将地图中所有keyframe的pose作为顶点添加到优化器
+    // TODO: 这里用了地图的所有帧的位姿，但是很多地方都是说EssentialGraph只优化部分关键帧的位姿，为什么?难道是不添加就不优化吗？
     // 尽可能使用经过Sim3调整的位姿
     for(size_t i=0, iend=vpKFs.size(); i<iend;i++)
     {
@@ -1092,7 +1093,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
                     Slw = itl->second;
                 else
                     Slw = vScw[pLKF->mnId];
-
+                // const g2o::Sim3 Sji = Sjw * Swi; 这是上面的Loop edge
                 g2o::Sim3 Sli = Slw * Swi;
                 g2o::EdgeSim3* el = new g2o::EdgeSim3();
                 el->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pLKF->mnId)));
