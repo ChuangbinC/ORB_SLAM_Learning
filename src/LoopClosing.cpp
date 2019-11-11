@@ -353,7 +353,7 @@ bool LoopClosing::ComputeSim3()
 
             // 步骤3：对步骤2中有较好的匹配的关键帧求取Sim3变换
             Sim3Solver* pSolver = vpSim3Solvers[i];
-            // 最多迭代5次，返回的Scm是候选帧pKF到当前帧mpCurrentKF的Sim3变换（T12）
+            // 先迭代5次，返回的Scm是候选帧pKF到当前帧mpCurrentKF的Sim3变换（T12）
             cv::Mat Scm  = pSolver->iterate(5,bNoMore,vbInliers,nInliers);
 
             // If Ransac reachs max. iterations discard keyframe
@@ -630,7 +630,6 @@ void LoopClosing::CorrectLoop()
             // 步骤2.4：根据共视关系更新当前帧与其它关键帧之间的连接
             pKFi->UpdateConnections();
         }
-        // TODO: 11.05 读到这里
         // Start Loop Fusion
         // Update matched map points and replace if duplicated
         // 步骤3：检查当前帧的MapPoints与闭环匹配帧的MapPoints是否存在冲突，对冲突的MapPoints进行替换或填补
@@ -695,6 +694,7 @@ void LoopClosing::CorrectLoop()
     // Add loop edge
     // 步骤7：添加当前帧与闭环匹配帧之间的边（这个连接关系不优化）
     // 这两句话应该放在OptimizeEssentialGraph之前，因为OptimizeEssentialGraph的步骤4.2中有优化，（wubo???）
+    // 针对上面这句话，这次添加的LoopEdge不在本次的EssentialGraph中进行优化，所以就不放在前面
     mpMatchedKF->AddLoopEdge(mpCurrentKF);
     mpCurrentKF->AddLoopEdge(mpMatchedKF);
 
