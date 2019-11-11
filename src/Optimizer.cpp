@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-29 19:20:20
- * @LastEditTime: 2019-10-29 20:10:15
+ * @LastEditTime: 2019-11-11 23:08:00
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -900,7 +900,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
  *     - g2o::VertexSim3Expmap，Essential graph中关键帧的位姿
  * 2. Edge:
  *     - g2o::EdgeSim3()，BaseBinaryEdge
- *         + Vertex：关键帧的Tcw，MapPoint的Pw
+ *         + Vertex：关键帧的Tcw，MapPoint的Pw(Pose_world)
  *         + measurement：经过CorrectLoop函数步骤2，Sim3传播校正后的位姿
  *         + InfoMatrix: 单位矩阵     
  *
@@ -1209,20 +1209,22 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 }
 
 /**
- * @brief 形成闭环时进行Sim3优化
+ * @brief 形成闭环时进行Sim3优化，当前帧和回环帧之间的投影关系
  *
  * 1. Vertex:
  *     - g2o::VertexSim3Expmap()，两个关键帧的位姿
  *     - g2o::VertexSBAPointXYZ()，两个关键帧共有的MapPoints
  * 2. Edge:
  *     - g2o::EdgeSim3ProjectXYZ()，BaseBinaryEdge
- *         + Vertex：关键帧的Sim3，MapPoint的Pw
+ *         + Vertex：关键帧的Sim3，MapPoint的Pw (边的两个顶点)
  *         + measurement：MapPoint在关键帧中的二维位置(u,v)
  *         + InfoMatrix: invSigma2(与特征点所在的尺度有关)
+ *         + pKF2对应的MapPoints到pKF1的投影
  *     - g2o::EdgeInverseSim3ProjectXYZ()，BaseBinaryEdge
  *         + Vertex：关键帧的Sim3，MapPoint的Pw
  *         + measurement：MapPoint在关键帧中的二维位置(u,v)
  *         + InfoMatrix: invSigma2(与特征点所在的尺度有关)
+ *         + pKF1对应的MapPoints到pKF2的投影
  *         
  * @param pKF1        KeyFrame
  * @param pKF2        KeyFrame
@@ -1341,7 +1343,7 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
         // 步骤2.3 添加两个顶点（3D点）到相机投影的边
         g2o::EdgeSim3ProjectXYZ* e12 = new g2o::EdgeSim3ProjectXYZ();
         e12->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id2)));
-        e12->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
+        e12->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0))); // Id=0为Tcw
         e12->setMeasurement(obs1);
         const float &invSigmaSquare1 = pKF1->mvInvLevelSigma2[kpUn1.octave];
         e12->setInformation(Eigen::Matrix2d::Identity()*invSigmaSquare1);
