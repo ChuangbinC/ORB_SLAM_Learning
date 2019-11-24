@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-29 19:20:20
- * @LastEditTime: 2019-11-11 23:08:00
+ * @LastEditTime: 2019-11-13 18:03:39
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -525,6 +525,8 @@ int Optimizer::PoseOptimization(Frame *pFrame)
  *
  * 1. Vertex:
  *     - g2o::VertexSE3Expmap()，LocalKeyFrames，即当前关键帧的位姿、与当前关键帧相连的关键帧的位姿
+ *           为什么能观测到LocalMapPoints，却不是LocalKeyFrame
+ *           因为他获得是共视关键帧，有一定共视程度,但是也有一些不是共视帧（没有达到共视帧条件）也能观测到这些点
  *     - g2o::VertexSE3Expmap()，FixedCameras，即能观测到LocalMapPoints的关键帧（并且不属于LocalKeyFrames）的位姿，在优化中这些关键帧的位姿不变
  *     - g2o::VertexSBAPointXYZ()，LocalMapPoints，即LocalKeyFrames能观测到的所有MapPoints的位置
  * 2. Edge:
@@ -546,6 +548,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     // 该优化函数用于LocalMapping线程的局部BA优化
 
     // Local KeyFrames: First Breadth Search from Current Keyframe
+    // 局部关键帧：从当前关键帧进行第一个广度搜索
     list<KeyFrame*> lLocalKeyFrames;
 
     // 步骤1：将当前关键帧加入lLocalKeyFrames
@@ -892,7 +895,6 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     }
 }
 
-// TODO: 看完闭环后再看
 /**
  * @brief 闭环检测后，EssentialGraph优化
  *
@@ -947,7 +949,8 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
 
     // Set KeyFrame vertices
     // 步骤2：将地图中所有keyframe的pose作为顶点添加到优化器
-    // TODO: 这里用了地图的所有帧的位姿，但是很多地方都是说EssentialGraph只优化部分关键帧的位姿，为什么?难道是不添加就不优化吗？
+    // 这里用了地图的所有帧的位姿，但是很多地方都是说EssentialGraph只优化部分关键帧的位姿，为什么?
+    // 不添加`边`，顶点就不被优化
     // 尽可能使用经过Sim3调整的位姿
     for(size_t i=0, iend=vpKFs.size(); i<iend;i++)
     {
