@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-19 17:55:13
- * @LastEditTime: 2019-10-31 00:37:49
+ * @LastEditTime: 2020-02-24 12:04:27
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -578,7 +578,6 @@ void Tracking::Track()
 
             // Check if we need to insert a new keyframe
             // 步骤2.6：检测并插入关键帧，对于双目会产生新的MapPoints，但是不会添加到Map里面？？
-            // TODO: 读到这里 10.29
             // TODO: 上面说不插入到Map里面，但是下面有插入到地图中的操作
             if(NeedNewKeyFrame())
                 CreateNewKeyFrame();
@@ -1310,7 +1309,6 @@ bool Tracking::NeedNewKeyFrame()
 
     // Tracked MapPoints in the reference keyframe
     // 步骤3：得到参考关键帧跟踪到的MapPoints数量
-	// 在UpdateLocalKeyFrames函数中会将与当前关键帧共视程度最高的关键帧设定为当前帧的参考关键帧
     int nMinObs = 3;
     if(nKFs<=2)
         nMinObs=2;

@@ -564,6 +564,7 @@ void LoopClosing::CorrectLoop()
                 cv::Mat tic = Tic.rowRange(0,3).col(3);
                 g2o::Sim3 g2oSic(Converter::toMatrix3d(Ric),Converter::toVector3d(tic),1.0);
                 // 当前帧的位姿固定不动，其它的关键帧根据相对关系得到Sim3调整的位姿
+                // 其他关键帧到世界坐标系的sim3位姿
                 g2o::Sim3 g2oCorrectedSiw = g2oSic*mg2oScw;
                 // Pose corrected with the Sim3 of the loop closure
                 // 得到闭环g2o优化后各个关键帧的位姿
@@ -615,7 +616,7 @@ void LoopClosing::CorrectLoop()
 
             // Update keyframe pose with corrected Sim3. First transform Sim3 to SE3 (scale translation)
             // 步骤2.3：将Sim3转换为SE3，根据更新的Sim3，更新关键帧的位姿
-            // TODO: 地图点就是Sim3? 关键帧就是SE3?
+            // 下面的rotation 不是旋转的意思，是获取旋转向量的意思，translation也是如此
             Eigen::Matrix3d eigR = g2oCorrectedSiw.rotation().toRotationMatrix();
             Eigen::Vector3d eigt = g2oCorrectedSiw.translation();
             double s = g2oCorrectedSiw.scale();

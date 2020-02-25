@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-23 11:39:53
- * @LastEditTime: 2019-11-08 00:52:52
+ * @LastEditTime: 2020-02-24 15:36:01
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -481,7 +481,6 @@ void KeyFrame::UpdateConnections()
         mvpOrderedConnectedKeyFrames = vector<KeyFrame*>(lKFs.begin(),lKFs.end());
         mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
 
-        // TODO: 看完论文回看这个段
         // 更新生成树的连接
         if(mbFirstConnection && mnId!=0)
         {

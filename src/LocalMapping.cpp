@@ -191,7 +191,6 @@ void LocalMapping::ProcessNewKeyFrame()
     mpCurrentKeyFrame->ComputeBoW();
 
     // Associate MapPoints to the new keyframe and update normal and descriptor
-    // TODO: Tracking 中 TrackingLocalMap 没有绑定吗？
     // 步骤3：跟踪局部地图过程中新匹配上的MapPoints和当前关键帧绑定
     // 在TrackLocalMap函数中将局部地图中的MapPoints与当前帧进行了匹配，
     // 但没有对这些匹配上的MapPoints与当前帧进行关联
