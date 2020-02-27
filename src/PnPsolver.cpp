@@ -1,11 +1,12 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-31 15:18:50
- * @LastEditTime: 2019-10-31 16:48:37
+ * @LastEditTime: 2020-02-27 13:53:32
  * @LastEditors: Do not edit
  * @Description: 
  */
 /**
+ * 
 * This file is part of ORB-SLAM2.
 * This file is a modified version of EPnP <http://cvlab.epfl.ch/EPnP/index.php>, see FreeBSD license below.
 *

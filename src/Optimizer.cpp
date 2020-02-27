@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-29 19:20:20
- * @LastEditTime: 2019-11-13 18:03:39
+ * @LastEditTime: 2020-02-27 00:52:46
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -84,6 +84,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
     // 步骤1：初始化g2o优化器
     g2o::SparseOptimizer optimizer;
+    // pose 维度为 6, landmark 维度为 3
     g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
 
     linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();

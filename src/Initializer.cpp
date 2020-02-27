@@ -1,7 +1,7 @@
 /*
  * @Author: Chuangbin Chen
  * @Date: 2019-10-25 16:08:02
- * @LastEditTime: 2019-10-27 14:52:47
+ * @LastEditTime: 2020-02-26 17:00:20
  * @LastEditors: Do not edit
  * @Description: 
  */
@@ -585,13 +585,14 @@ float Initializer::CheckFundamental(const cv::Mat &F21, vector<bool> &vbMatchesI
     return score;
 }
 
-
+// W 为 R_Z(pi/2) 表示沿Z轴旋转90度的旋转矩阵
 //                          |0 -1  0|
 // E = U Sigma V'   let W = |1  0  0|
 //                          |0  0  1|
 // 得到4个解 E = [R|t]
 // R1 = UWV' R2 = UW'V' t1 = U3 t2 = -U3
-
+// https://blog.csdn.net/kokerf/article/details/72911561
+// 这里有关于W的推导
 /**
  * @brief 从F恢复R t
  * 
